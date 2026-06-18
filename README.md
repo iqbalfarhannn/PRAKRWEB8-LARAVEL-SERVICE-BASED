@@ -1,58 +1,230 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# 🧑‍💼 Pegawai CRUD API
 
-## About Laravel
+### RESTful API Manajemen Data Pegawai dengan Laravel Service Pattern
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+[![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com)
+[![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](https://www.postman.com)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Tugas Mata Kuliah **Rekayasa Web** — Implementasi CRUD dengan Service Layer Pattern
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+</div>
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 📋 Daftar Isi
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- [Tentang Project](#-tentang-project)
+- [Struktur Database](#-struktur-database)
+- [Arsitektur](#-arsitektur)
+- [Aturan Validasi](#-aturan-validasi)
+- [Instalasi](#-instalasi)
+- [Dokumentasi API](#-dokumentasi-api)
+- [Contoh Request & Response](#-contoh-request--response)
+- [Pengujian](#-pengujian)
+- [Tech Stack](#-tech-stack)
+- [Identitas](#-identitas)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## 📖 Tentang Project
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Project ini merupakan implementasi **RESTful API CRUD (Create, Read, Update, Delete)** untuk manajemen data pegawai, dibangun menggunakan **Laravel** dengan pola **Service Layer** — memisahkan logika bisnis (Service) dari logika HTTP (Controller) agar kode lebih rapi, mudah diuji, dan mudah dikembangkan.
 
-```bash
-composer require laravel/boost --dev
+Setiap data pegawai melewati validasi ketat sebelum disimpan ke database, memastikan integritas data seperti format NIP, panjang nama, dan keunikan email.
 
-php artisan boost:install
+---
+
+## 🗄 Struktur Database
+
+Tabel `pegawai` terdiri dari kolom-kolom berikut:
+
+| Kolom | Tipe Data | Keterangan |
+|---|---|---|
+| `id` | bigint, primary key | Auto increment |
+| `nip` | string(18), unique | Nomor Induk Pegawai |
+| `nama_lengkap` | string(100) | Nama lengkap pegawai |
+| `jabatan` | string(50) | Jabatan/posisi pegawai |
+| `email` | string, unique | Alamat email pegawai |
+| `created_at` | timestamp | Waktu data dibuat |
+| `updated_at` | timestamp | Waktu data terakhir diubah |
+
+---
+
+## 🏗 Arsitektur
+
+Project ini mengikuti pola **Service Layer**, di mana Controller tidak langsung berinteraksi dengan Model, melainkan melalui Service:
+
+```
+Request  →  Controller (validasi & response)  →  Service (logika bisnis)  →  Model  →  Database
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+```
+app/
+├── Http/Controllers/API/
+│   └── PegawaiController.php   # Menangani request HTTP & validasi
+├── Models/
+│   └── Pegawai.php             # Representasi tabel pegawai
+├── Services/
+│   └── PegawaiService.php      # Logika CRUD ke database
+database/
+└── migrations/
+    └── xxxx_create_pegawai_table.php
+routes/
+└── api.php                     # Routing endpoint API
+```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## ✅ Aturan Validasi
 
-## Code of Conduct
+| Field | Aturan |
+|---|---|
+| **NIP** | Wajib diisi, hanya berupa angka, panjang 8–18 digit, unik |
+| **Nama Lengkap** | Wajib diisi, teks, minimal 3 karakter, maksimal 100 karakter |
+| **Jabatan** | Wajib diisi, teks, minimal 3 karakter, maksimal 50 karakter |
+| **Email** | Wajib diisi, format email valid, unik |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+> 💡 Saat update data, validasi `unique` pada NIP dan email mengecualikan data milik pegawai itu sendiri, sehingga pegawai tetap bisa mengubah data lain tanpa ditolak karena "memakai NIP/email miliknya sendiri".
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## ⚙️ Instalasi
 
-## License
+```bash
+# 1. Clone repository
+git clone https://github.com/iqbalfarhannn/PRAKRWEB8-LARAVEL-SERVICE-BASED.git
+cd PRAKRWEB8-LARAVEL-SERVICE-BASED
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# 2. Install dependencies
+composer install
+
+# 3. Salin file environment
+cp .env.example .env
+
+# 4. Generate application key
+php artisan key:generate
+
+# 5. Atur koneksi database di file .env, lalu jalankan migration
+php artisan migrate
+
+# 6. Jalankan server lokal
+php artisan serve
+```
+
+Server akan berjalan di `http://127.0.0.1:8000`.
+
+---
+
+## 📡 Dokumentasi API
+
+Base URL: `http://127.0.0.1:8000/api/pegawai`
+
+| Method | Endpoint | Keterangan |
+|---|---|---|
+| `GET` | `/api/pegawai` | Menampilkan seluruh data pegawai |
+| `GET` | `/api/pegawai/{id}` | Menampilkan satu data pegawai berdasarkan ID |
+| `POST` | `/api/pegawai` | Menambahkan data pegawai baru |
+| `PUT` | `/api/pegawai/{id}` | Memperbarui data pegawai berdasarkan ID |
+| `DELETE` | `/api/pegawai/{id}` | Menghapus data pegawai berdasarkan ID |
+
+---
+
+## 🔍 Contoh Request & Response
+
+### ➕ Create Pegawai — Sukses
+
+**Request**
+```http
+POST /api/pegawai
+Content-Type: application/json
+```
+```json
+{
+  "nip": "198501012010011001",
+  "nama_lengkap": "Budi Santoso",
+  "jabatan": "Staff IT",
+  "email": "budi.santoso@example.com"
+}
+```
+
+**Response** `201 Created`
+```json
+{
+  "id": 1,
+  "nip": "198501012010011001",
+  "nama_lengkap": "Budi Santoso",
+  "jabatan": "Staff IT",
+  "email": "budi.santoso@example.com",
+  "created_at": "2026-06-18T12:00:00.000000Z",
+  "updated_at": "2026-06-18T12:00:00.000000Z"
+}
+```
+
+### ❌ Create Pegawai — Gagal Validasi
+
+**Request**
+```json
+{
+  "nip": "12ab",
+  "nama_lengkap": "Bu",
+  "jabatan": "IT",
+  "email": "bukanemail"
+}
+```
+
+**Response** `422 Unprocessable Entity`
+```json
+{
+  "message": "The nip field must be between 8 and 18 digits. (and 3 more errors)",
+  "errors": {
+    "nip": ["The nip field must be between 8 and 18 digits."],
+    "nama_lengkap": ["The nama lengkap field must be at least 3 characters."],
+    "jabatan": ["The jabatan field must be at least 3 characters."],
+    "email": ["The email field must be a valid email address."]
+  }
+}
+```
+
+---
+
+## 🧪 Pengujian
+
+Pengujian API dilakukan menggunakan **Postman**, mencakup skenario berhasil (CRUD normal) maupun skenario gagal validasi (NIP tidak valid, email duplikat, field kosong, dll).
+
+📁 Koleksi Postman dapat ditemukan di: [`/postman/pegawai-crud.postman_collection.json`](./postman/pegawai-crud.postman_collection.json)
+
+📸 Screenshot hasil pengujian dapat ditemukan di folder [`/docs/screenshots`](./docs/screenshots)
+
+---
+
+## 🛠 Tech Stack
+
+| Teknologi | Fungsi |
+|---|---|
+| Laravel | Framework backend & routing API |
+| MySQL | Database relasional |
+| Postman | Pengujian endpoint API |
+| Git & GitHub | Version control & kolaborasi |
+
+---
+
+## 👤 Identitas
+
+| | |
+|---|---|
+| **Nama** | _[Farhan Muhammad Iqbal]_ |
+| **NIM** | _[2300018164]_ |
+| **Kelas** | _[A]_ |
+| **Mata Kuliah** | Rekayasa Web |
+
+---
+
+<div align="center">
+
+Dibuat sebagai pemenuhan tugas praktikum Rekayasa Web
+
+</div>
